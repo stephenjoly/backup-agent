@@ -19,6 +19,15 @@ MACHINE_NAME=""
 #   BACKUP_TARGET="rsync://backup-user@nas.local/backups"
 BACKUP_TARGET="backup-user@nas.local:/volume/backups"
 
+# Optional SSH settings for SSH-style targets.
+# Leave empty to use your normal ~/.ssh/config and default SSH port.
+SSH_PORT=""
+SSH_KEY=""
+SSH_EXTRA_OPTS=(
+  # "-o"
+  # "StrictHostKeyChecking=accept-new"
+)
+
 # Each machine writes to its own namespace.
 # The final layout is:
 #   ${SNAPSHOT_ROOT}/snapshots/YYYY-MM-DD_HH-MM-SS/
@@ -89,4 +98,3 @@ PRUNE_AFTER_BACKUP=false
 
 # Set true to log itemized rsync changes during real backups.
 VERBOSE=false
-

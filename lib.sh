@@ -33,6 +33,11 @@ shell_quote() {
   printf '%q' "$1"
 }
 
+single_quote() {
+  # Quote for command strings consumed by tools such as rsync -e.
+  printf "'%s'" "${1//\'/\'\\\'\'}"
+}
+
 expand_path() {
   local path="${1:-}"
   if [[ "$path" == "~" ]]; then
@@ -53,6 +58,14 @@ load_config() {
   BACKUP_TARGET="${BACKUP_TARGET:-}"
   SNAPSHOT_ROOT="${SNAPSHOT_ROOT:-${BACKUP_TARGET%/}/$MACHINE_NAME}"
   BACKUP_FREQUENCY="${BACKUP_FREQUENCY:-hourly}"
+  SSH_PORT="${SSH_PORT:-}"
+  SSH_KEY="${SSH_KEY:-}"
+  if [[ -n "$SSH_KEY" ]]; then
+    SSH_KEY="$(expand_path "$SSH_KEY")"
+  fi
+  if [[ -z "${SSH_EXTRA_OPTS+x}" ]]; then
+    SSH_EXTRA_OPTS=()
+  fi
   MIN_FREE_SPACE_GB="${MIN_FREE_SPACE_GB:-0}"
   DRY_RUN_BY_DEFAULT="${DRY_RUN_BY_DEFAULT:-true}"
   PRUNE_AFTER_BACKUP="${PRUNE_AFTER_BACKUP:-false}"
@@ -113,7 +126,23 @@ target_display_root() {
 
 remote_exec() {
   [[ "$TARGET_MODE" == "ssh" ]] || die "remote_exec called for non-ssh target"
-  ssh "$REMOTE_HOST" "$@"
+  local ssh_cmd=(ssh)
+  [[ -n "${SSH_PORT:-}" ]] && ssh_cmd+=(-p "$SSH_PORT")
+  [[ -n "${SSH_KEY:-}" ]] && ssh_cmd+=(-i "$SSH_KEY")
+  ssh_cmd+=("${SSH_EXTRA_OPTS[@]}")
+  "${ssh_cmd[@]}" "$REMOTE_HOST" "$@"
+}
+
+rsync_ssh_args() {
+  [[ "$TARGET_MODE" == "ssh" ]] || return 0
+  local rsh="ssh"
+  [[ -n "${SSH_PORT:-}" ]] && rsh="$rsh -p $(single_quote "$SSH_PORT")"
+  [[ -n "${SSH_KEY:-}" ]] && rsh="$rsh -i $(single_quote "$SSH_KEY")"
+  local opt
+  for opt in "${SSH_EXTRA_OPTS[@]}"; do
+    rsh="$rsh $(single_quote "$opt")"
+  done
+  printf '%s\n' "$rsh"
 }
 
 target_mkdirs() {

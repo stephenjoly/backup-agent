@@ -84,7 +84,7 @@ check_excludes() {
 check_target_reachable() {
   case "$TARGET_MODE" in
     ssh)
-      if ssh "$REMOTE_HOST" "test -d $(shell_quote "${REMOTE_PATH%/*}") || test -d $(shell_quote "$REMOTE_PATH")" >/dev/null 2>&1; then
+      if remote_exec "test -d $(shell_quote "${REMOTE_PATH%/*}") || test -d $(shell_quote "$REMOTE_PATH")" >/dev/null 2>&1; then
         pass "SSH target is reachable: $REMOTE_HOST"
       else
         fail "SSH target is not reachable or parent path is missing: $(target_display_root)"
@@ -113,10 +113,10 @@ check_target_writable_and_hardlinks() {
   case "$TARGET_MODE" in
     ssh)
       test_dir="$REMOTE_PATH/.validate-backup-agent-$$"
-      if ssh "$REMOTE_HOST" "mkdir -p $(shell_quote "$test_dir") && printf test > $(shell_quote "$test_dir/a") && ln $(shell_quote "$test_dir/a") $(shell_quote "$test_dir/b") && rm -rf -- $(shell_quote "$test_dir")" >/dev/null 2>&1; then
+      if remote_exec "mkdir -p $(shell_quote "$test_dir") && printf test > $(shell_quote "$test_dir/a") && ln $(shell_quote "$test_dir/a") $(shell_quote "$test_dir/b") && rm -rf -- $(shell_quote "$test_dir")" >/dev/null 2>&1; then
         pass "target is writable and supports hard links."
       else
-        ssh "$REMOTE_HOST" "rm -rf -- $(shell_quote "$test_dir")" >/dev/null 2>&1 || true
+        remote_exec "rm -rf -- $(shell_quote "$test_dir")" >/dev/null 2>&1 || true
         fail "target is not writable or hard links are not supported: $(target_display_root)"
       fi
       ;;
@@ -179,4 +179,3 @@ main() {
 }
 
 main "$@"
-

@@ -61,6 +61,10 @@ build_rsync_args() {
     resolved="$(resolve_exclude_file "$exclude_file")"
     RSYNC_ARGS+=("--exclude-from=$resolved")
   done
+
+  if [[ "$TARGET_MODE" == "ssh" ]]; then
+    RSYNC_ARGS+=(-e "$(rsync_ssh_args)")
+  fi
 }
 
 ensure_sources_exist() {
@@ -138,6 +142,11 @@ run_backup() {
   if ! truthy "$dry_run"; then
     prepare_tmp_root "$tmp"
     cleanup_needed=true
+  else
+    # Some rsync versions create the destination directory even with --dry-run.
+    # Treat dry-run staging as cleanup-owned so interrupted scans do not leave
+    # .incomplete-* directories behind.
+    cleanup_needed=true
   fi
 
   cleanup() {
@@ -172,6 +181,8 @@ run_backup() {
   done
 
   if truthy "$dry_run"; then
+    log "cleaning dry-run staging directory if rsync created it: $tmp"
+    delete_remote_tree "$tmp" || true
     log "dry run complete; no snapshot was created."
     cleanup_needed=false
     trap - EXIT INT TERM

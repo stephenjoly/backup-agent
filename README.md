@@ -40,6 +40,10 @@ Use an SSH-style rsync destination for full functionality:
 ```bash
 BACKUP_TARGET="backup-user@nas.local:/volume/backups"
 SNAPSHOT_ROOT="${BACKUP_TARGET}/${MACHINE_NAME}"
+
+# Optional when the NAS uses a non-default SSH port or key.
+SSH_PORT=""
+SSH_KEY=""
 ```
 
 `rsync://...` targets can be checked for reachability, but they do not provide the remote shell operations needed for safe rename, `latest` updates, hard-link validation, and pruning. `validate.sh` will fail hard-link snapshot mode for `rsync://` targets.
@@ -130,6 +134,9 @@ Edit `config`:
 MACHINE_NAME=""
 BACKUP_TARGET="backup-user@nas.local:/volume/backups"
 SNAPSHOT_ROOT="${BACKUP_TARGET}/${MACHINE_NAME:-$(hostname -s 2>/dev/null || hostname)}"
+
+SSH_PORT=""
+SSH_KEY=""
 
 SOURCE_PATHS=(
   "$HOME/Documents"
@@ -252,6 +259,8 @@ macOS:
 MACHINE_NAME="ubuntu-server-01"
 BACKUP_TARGET="backup-user@nas.local:/volume/backups"
 SNAPSHOT_ROOT="${BACKUP_TARGET}/${MACHINE_NAME}"
+SSH_PORT=""
+SSH_KEY=""
 
 SOURCE_PATHS=(
   "$HOME/Documents"
@@ -282,6 +291,8 @@ PRUNE_AFTER_BACKUP=false
 MACHINE_NAME="work-macbook"
 BACKUP_TARGET="backup-user@nas.local:/volume/backups"
 SNAPSHOT_ROOT="${BACKUP_TARGET}/${MACHINE_NAME}"
+SSH_PORT=""
+SSH_KEY=""
 
 # Include only known-safe personal folders. Avoid broad Desktop/Documents
 # unless you explicitly intend to back them up from this work machine.
