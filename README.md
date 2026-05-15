@@ -4,6 +4,16 @@ A small, portable rsync snapshot backup directory for Linux and macOS machines.
 
 It creates Time Machine-style timestamped snapshots on a NAS using `rsync -a --delete --link-dest`. Unchanged files are hard-linked from the previous snapshot, so each snapshot looks complete while only changed file data consumes new space.
 
+## Public Sharing Safety
+
+This repository is intended to be safe to share publicly.
+
+- `config.example` contains placeholders only.
+- Your real `config` file is ignored by Git.
+- Generated logs under `logs/` are ignored by Git.
+- Do not commit real NAS hostnames, usernames, internal paths, source path lists from work machines, SSH keys, tokens, or backup logs.
+- Keep per-machine settings in the local `config` file copied from `config.example`.
+
 ## What It Does
 
 - Backs up only the paths listed in `SOURCE_PATHS`.
@@ -324,4 +334,3 @@ PRUNE_AFTER_BACKUP=false
 - Hard links require destination support and usually the same destination filesystem.
 - `rsync://` targets are not enough for this implementation's safe snapshot lifecycle.
 - Paths with unusual shell characters on the remote destination are best avoided.
-
