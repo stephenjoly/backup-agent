@@ -151,7 +151,7 @@ run_backup() {
 
   cleanup() {
     local status=$?
-    if [[ "$cleanup_needed" == true ]]; then
+    if [[ "${cleanup_needed:-false}" == true ]]; then
       log "cleaning incomplete snapshot: $tmp"
       delete_remote_tree "$tmp" || true
     fi
