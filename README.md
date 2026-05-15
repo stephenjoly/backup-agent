@@ -224,13 +224,13 @@ Default retention:
 - Keep one weekly snapshot for the last `RETENTION_WEEKLY` weeks.
 - Keep one monthly snapshot for the last `RETENTION_MONTHLY` months.
 
-Simple fallback:
+Recent-snapshot floor:
 
 ```bash
 RETENTION_KEEP_RECENT=100
 ```
 
-When `RETENTION_KEEP_RECENT` is positive, pruning keeps only the most recent N snapshots and ignores the hourly/daily/weekly/monthly policy.
+When `RETENTION_KEEP_RECENT` is positive, pruning always keeps at least the most recent N snapshots in addition to the hourly/daily/weekly/monthly policy.
 
 ## Scheduling
 

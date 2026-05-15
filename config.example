@@ -80,9 +80,9 @@ RETENTION_DAILY=14
 RETENTION_WEEKLY=8
 RETENTION_MONTHLY=12
 
-# Simpler fallback retention:
-# Set to a positive number to ignore the hourly/daily/weekly/monthly policy and
-# keep only the most recent N snapshots.
+# Additive recent-snapshot floor:
+# Set to a positive number to always keep at least the most recent N snapshots,
+# in addition to the hourly/daily/weekly/monthly policy.
 RETENTION_KEEP_RECENT=0
 
 # Optional safety check before backup. Set to 0 to disable.

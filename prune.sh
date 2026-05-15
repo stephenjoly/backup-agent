@@ -91,13 +91,9 @@ choose_snapshots_to_keep() {
       continue
     fi
 
-    if [[ "${RETENTION_KEEP_RECENT:-0}" -gt 0 ]]; then
-      if [[ "$idx" -le "$RETENTION_KEEP_RECENT" ]]; then
-        log "KEEP $snap (within most recent $RETENTION_KEEP_RECENT snapshots)"
-        keep="$(add_line_once "$keep" "$snap")"
-      else
-        log "DELETE $snap (older than most recent $RETENTION_KEEP_RECENT snapshots)"
-      fi
+    if [[ "${RETENTION_KEEP_RECENT:-0}" -gt 0 && "$idx" -le "$RETENTION_KEEP_RECENT" ]]; then
+      log "KEEP $snap (within most recent $RETENTION_KEEP_RECENT snapshots)"
+      keep="$(add_line_once "$keep" "$snap")"
       continue
     fi
 
