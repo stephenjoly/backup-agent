@@ -92,6 +92,11 @@ MIN_FREE_SPACE_GB=20
 # Explicit ./backup.sh run still performs a real backup.
 DRY_RUN_BY_DEFAULT=true
 
+# In real backup runs, remove stale .incomplete-* directories from older failed
+# or interrupted attempts before starting a new snapshot. A local lock prevents
+# overlapping runs on the same machine from deleting each other's staging dirs.
+CLEAN_STALE_INCOMPLETE=true
+
 # Pruning is never automatic unless this is true.
 # Recommended: leave false and run ./prune.sh dry-run before ./prune.sh run.
 PRUNE_AFTER_BACKUP=false

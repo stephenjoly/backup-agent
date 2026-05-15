@@ -19,6 +19,7 @@ This repository is intended to be safe to share publicly.
 - Backs up only the paths listed in `SOURCE_PATHS`.
 - Writes each machine into its own namespace on the NAS.
 - Builds each new snapshot in `.incomplete-*` first.
+- Removes stale `.incomplete-*` directories from older failed or interrupted real backup runs before starting a new real snapshot.
 - Moves the completed snapshot into `snapshots/YYYY-MM-DD_HH-MM-SS/` only after rsync succeeds.
 - Updates `latest` only after success.
 - Cleans incomplete snapshots after failures or interrupts.
@@ -341,7 +342,7 @@ PRUNE_AFTER_BACKUP=false
 - No built-in encryption.
 - No application-consistent database backups.
 - No special handling for live VM disk images.
-- Network rsync jobs can be interrupted; incomplete snapshots are cleaned up by the script.
+- Network rsync jobs can be interrupted; the active incomplete snapshot is cleaned up by the script, and stale incomplete snapshots are cleaned before the next real run.
 - Hard links require destination support and usually the same destination filesystem.
 - `rsync://` targets are not enough for this implementation's safe snapshot lifecycle.
 - Paths with unusual shell characters on the remote destination are best avoided.

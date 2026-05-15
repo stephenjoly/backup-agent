@@ -101,6 +101,47 @@ prepare_tmp_root() {
   esac
 }
 
+acquire_run_lock() {
+  LOCK_DIR="$SCRIPT_DIR/.backup.lock"
+  if mkdir "$LOCK_DIR" 2>/dev/null; then
+    printf '%s\n' "$$" > "$LOCK_DIR/pid"
+    LOCK_TAKEN=true
+    return 0
+  fi
+  die "Another backup appears to be running. Lock exists: $LOCK_DIR"
+}
+
+release_run_lock() {
+  if [[ "${LOCK_TAKEN:-false}" == true ]]; then
+    rm -rf -- "$LOCK_DIR"
+    LOCK_TAKEN=false
+  fi
+}
+
+cleanup_stale_incomplete() {
+  local current_tmp="$1"
+  local stale
+
+  if ! truthy "$CLEAN_STALE_INCOMPLETE"; then
+    log "stale incomplete cleanup disabled."
+    return 0
+  fi
+
+  while IFS= read -r stale; do
+    [[ -n "$stale" ]] || continue
+    [[ "$stale" == "$current_tmp" ]] && continue
+    case "$stale" in
+      .incomplete-*)
+        log "removing stale incomplete snapshot before backup: $stale"
+        delete_remote_tree "$stale"
+        ;;
+      *)
+        warn "Ignoring unexpected incomplete snapshot name: $stale"
+        ;;
+    esac
+  done < <(list_incomplete_snapshots)
+}
+
 run_backup() {
   local dry_run="$1"
   local stamp tmp previous cleanup_needed free_gb
@@ -110,6 +151,8 @@ run_backup() {
   cleanup_needed=false
 
   log "backup-agent starting: mode=$([[ "$dry_run" == true ]] && printf dry-run || printf run)"
+  acquire_run_lock
+  trap 'release_run_lock' EXIT INT TERM
   load_config
   parse_snapshot_root
   require_managed_target
@@ -119,6 +162,10 @@ run_backup() {
   build_rsync_args "$dry_run"
 
   target_mkdirs
+  if ! truthy "$dry_run"; then
+    cleanup_stale_incomplete "$tmp"
+  fi
+
   if [[ "${MIN_FREE_SPACE_GB:-0}" -gt 0 ]]; then
     free_gb="$(available_gb)"
     log "free space at target: ${free_gb} GB"
@@ -155,6 +202,7 @@ run_backup() {
       log "cleaning incomplete snapshot: $tmp"
       delete_remote_tree "$tmp" || true
     fi
+    release_run_lock
     exit "$status"
   }
   trap cleanup EXIT INT TERM
@@ -186,6 +234,7 @@ run_backup() {
     log "dry run complete; no snapshot was created."
     cleanup_needed=false
     trap - EXIT INT TERM
+    release_run_lock
     return 0
   fi
 
@@ -207,6 +256,7 @@ run_backup() {
   fi
 
   trap - EXIT INT TERM
+  release_run_lock
 }
 
 list_action() {

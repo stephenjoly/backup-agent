@@ -68,6 +68,7 @@ load_config() {
   fi
   MIN_FREE_SPACE_GB="${MIN_FREE_SPACE_GB:-0}"
   DRY_RUN_BY_DEFAULT="${DRY_RUN_BY_DEFAULT:-true}"
+  CLEAN_STALE_INCOMPLETE="${CLEAN_STALE_INCOMPLETE:-true}"
   PRUNE_AFTER_BACKUP="${PRUNE_AFTER_BACKUP:-false}"
   RETENTION_KEEP_RECENT="${RETENTION_KEEP_RECENT:-0}"
   RETENTION_HOURLY="${RETENTION_HOURLY:-24}"
@@ -178,6 +179,20 @@ list_snapshots() {
       ;;
     rsync_daemon)
       rsync "${REMOTE_PATH%/}/snapshots/" 2>/dev/null | awk '{print $NF}' | sort || true
+      ;;
+  esac
+}
+
+list_incomplete_snapshots() {
+  case "$TARGET_MODE" in
+    ssh)
+      remote_exec "test -d $(shell_quote "$REMOTE_PATH") && find $(shell_quote "$REMOTE_PATH") -mindepth 1 -maxdepth 1 -type d -name '.incomplete-*' -exec basename {} \\; | sort || true"
+      ;;
+    local)
+      [[ -d "$LOCAL_ROOT" ]] && find "$LOCAL_ROOT" -mindepth 1 -maxdepth 1 -type d -name '.incomplete-*' -exec basename {} \; | sort || true
+      ;;
+    rsync_daemon)
+      die "Cannot safely list incomplete snapshots on rsync:// target."
       ;;
   esac
 }
