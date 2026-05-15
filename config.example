@@ -1,0 +1,92 @@
+# backup-agent configuration
+#
+# Copy this file to ./config and edit it on each machine:
+#   cp config.example config
+#
+# This file is sourced by Bash. Keep values quoted and arrays in Bash syntax.
+
+# Defaults to hostname if left empty.
+MACHINE_NAME=""
+
+# Destination root on the NAS.
+#
+# Recommended for full snapshot management:
+#   BACKUP_TARGET="backup-user@nas.local:/volume/backups"
+#
+# rsync daemon URLs can be checked for reachability, but this tool requires
+# SSH-style shell access for safe remote rename, hard-link validation, latest
+# symlink updates, and pruning:
+#   BACKUP_TARGET="rsync://backup-user@nas.local/backups"
+BACKUP_TARGET="backup-user@nas.local:/volume/backups"
+
+# Each machine writes to its own namespace.
+# The final layout is:
+#   ${SNAPSHOT_ROOT}/snapshots/YYYY-MM-DD_HH-MM-SS/
+#   ${SNAPSHOT_ROOT}/latest -> snapshots/YYYY-MM-DD_HH-MM-SS
+SNAPSHOT_ROOT="${BACKUP_TARGET}/${MACHINE_NAME:-$(hostname -s 2>/dev/null || hostname)}"
+
+# Selective backup mode:
+# Only paths explicitly listed here are backed up. This is the safest default,
+# especially for work machines that may contain confidential files.
+#
+# Personal Linux/macOS machines:
+#   Backing up selected home directories such as Documents, Projects, .ssh, and
+#   selected app data is usually reasonable.
+#
+# Work machines:
+#   Prefer explicitly included personal directories only. Do not back up broad
+#   folders like ~/Desktop or ~/Documents unless you deliberately intend to.
+#   Do not try to infer confidential files by extension alone; choose known-safe
+#   source directories instead.
+SOURCE_PATHS=(
+  "$HOME/Documents"
+  "$HOME/Projects"
+  "$HOME/.ssh"
+  "$HOME/Downloads"
+)
+
+# Exclude files are evaluated in order. Relative paths are resolved from this
+# backup-agent directory.
+EXCLUDE_FILES=(
+  "excludes.common"
+  "excludes.dev"
+  "excludes.linux"
+  "excludes.mac"
+)
+
+# Scheduling used by install.sh.
+# Supported simple values: hourly, daily, weekly.
+# For cron installs, you may also provide a five-field cron expression.
+# For systemd installs, you may also provide an OnCalendar expression.
+BACKUP_FREQUENCY="hourly"
+
+# Retention policy used by prune.sh.
+# Default model:
+#   Keep all snapshots from the last RETENTION_HOURLY hours.
+#   Keep one daily snapshot for RETENTION_DAILY days.
+#   Keep one weekly snapshot for RETENTION_WEEKLY weeks.
+#   Keep one monthly snapshot for RETENTION_MONTHLY months.
+RETENTION_HOURLY=24
+RETENTION_DAILY=14
+RETENTION_WEEKLY=8
+RETENTION_MONTHLY=12
+
+# Simpler fallback retention:
+# Set to a positive number to ignore the hourly/daily/weekly/monthly policy and
+# keep only the most recent N snapshots.
+RETENTION_KEEP_RECENT=0
+
+# Optional safety check before backup. Set to 0 to disable.
+MIN_FREE_SPACE_GB=20
+
+# If true, running ./backup.sh with no command defaults to dry-run.
+# Explicit ./backup.sh run still performs a real backup.
+DRY_RUN_BY_DEFAULT=true
+
+# Pruning is never automatic unless this is true.
+# Recommended: leave false and run ./prune.sh dry-run before ./prune.sh run.
+PRUNE_AFTER_BACKUP=false
+
+# Set true to log itemized rsync changes during real backups.
+VERBOSE=false
+

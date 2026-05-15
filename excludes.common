@@ -1,0 +1,12 @@
+# Common cache, trash, and temporary files.
+.cache/
+Cache/
+tmp/
+temp/
+Trash/
+.Trash/
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+

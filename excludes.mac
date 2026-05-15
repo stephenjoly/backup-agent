@@ -1,0 +1,9 @@
+# macOS cache and system metadata paths.
+Library/Caches/
+Library/Logs/
+Library/Developer/Xcode/DerivedData/
+Library/Containers/*/Data/Library/Caches/
+.Spotlight-V100/
+.fseventsd/
+.Trashes/
+

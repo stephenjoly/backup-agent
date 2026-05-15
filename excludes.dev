@@ -1,0 +1,22 @@
+# Developer build artifacts and dependency caches.
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+target/
+dist/
+build/
+.next/
+.nuxt/
+coverage/
+.terraform/
+.gradle/
+vendor/bundle/
+.bundle/
+.cargo/registry/
+.cargo/git/
+

@@ -1,0 +1,19 @@
+# Linux system and user cache paths.
+#
+# These patterns help when backing up broad roots. For selective SOURCE_PATHS,
+# only paths under each selected source are scanned.
+.cache/
+.local/share/Trash/
+proc/
+sys/
+dev/
+run/
+mnt/
+media/
+/proc/
+/sys/
+/dev/
+/run/
+/mnt/
+/media/
+
