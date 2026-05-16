@@ -58,6 +58,7 @@ load_config() {
   BACKUP_TARGET="${BACKUP_TARGET:-}"
   SNAPSHOT_ROOT="${SNAPSHOT_ROOT:-${BACKUP_TARGET%/}/$MACHINE_NAME}"
   BACKUP_FREQUENCY="${BACKUP_FREQUENCY:-hourly}"
+  BACKUP_TIMEZONE="${BACKUP_TIMEZONE:-}"
   SSH_PORT="${SSH_PORT:-}"
   SSH_KEY="${SSH_KEY:-}"
   if [[ -n "$SSH_KEY" ]]; then
@@ -305,7 +306,11 @@ available_gb() {
 }
 
 timestamp() {
-  date '+%Y-%m-%d_%H-%M-%S'
+  if [[ -n "${BACKUP_TIMEZONE:-}" ]]; then
+    TZ="$BACKUP_TIMEZONE" date '+%Y-%m-%d_%H-%M-%S'
+  else
+    date '+%Y-%m-%d_%H-%M-%S'
+  fi
 }
 
 setup_log() {

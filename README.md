@@ -138,6 +138,7 @@ SNAPSHOT_ROOT="${BACKUP_TARGET}/${MACHINE_NAME:-$(hostname -s 2>/dev/null || hos
 
 SSH_PORT=""
 SSH_KEY=""
+BACKUP_TIMEZONE="America/Toronto"
 
 SOURCE_PATHS=(
   "$HOME/Documents"
@@ -152,6 +153,8 @@ EXCLUDE_FILES=(
   "excludes.mac"
 )
 ```
+
+`BACKUP_TIMEZONE` controls snapshot folder names and pruning calculations. Leave it empty to use each machine's local timezone, or set an IANA timezone such as `America/Toronto` for consistent names across machines.
 
 For personal Linux machines, backing up selected home directories is reasonable. For work machines, prefer explicitly included personal directories only. Do not try to infer confidential files by extension alone. Avoid broad folders like `~/Desktop` or `~/Documents` on a work machine unless that is explicitly intended.
 

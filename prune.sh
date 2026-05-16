@@ -35,9 +35,17 @@ snapshot_epoch() {
   local snap="$1"
   local gnu_value="${snap:0:10} ${snap:11:2}:${snap:14:2}:${snap:17:2}"
   if [[ "$date_supports_gnu" == true ]]; then
-    date -d "$gnu_value" '+%s'
+    if [[ -n "${BACKUP_TIMEZONE:-}" ]]; then
+      TZ="$BACKUP_TIMEZONE" date -d "$gnu_value" '+%s'
+    else
+      date -d "$gnu_value" '+%s'
+    fi
   else
-    date -j -f '%Y-%m-%d_%H-%M-%S' "$snap" '+%s'
+    if [[ -n "${BACKUP_TIMEZONE:-}" ]]; then
+      TZ="$BACKUP_TIMEZONE" date -j -f '%Y-%m-%d_%H-%M-%S' "$snap" '+%s'
+    else
+      date -j -f '%Y-%m-%d_%H-%M-%S' "$snap" '+%s'
+    fi
   fi
 }
 
@@ -46,9 +54,17 @@ snapshot_fmt() {
   local fmt="$2"
   local gnu_value="${snap:0:10} ${snap:11:2}:${snap:14:2}:${snap:17:2}"
   if [[ "$date_supports_gnu" == true ]]; then
-    date -d "$gnu_value" "$fmt"
+    if [[ -n "${BACKUP_TIMEZONE:-}" ]]; then
+      TZ="$BACKUP_TIMEZONE" date -d "$gnu_value" "$fmt"
+    else
+      date -d "$gnu_value" "$fmt"
+    fi
   else
-    date -j -f '%Y-%m-%d_%H-%M-%S' "$snap" "$fmt"
+    if [[ -n "${BACKUP_TIMEZONE:-}" ]]; then
+      TZ="$BACKUP_TIMEZONE" date -j -f '%Y-%m-%d_%H-%M-%S' "$snap" "$fmt"
+    else
+      date -j -f '%Y-%m-%d_%H-%M-%S' "$snap" "$fmt"
+    fi
   fi
 }
 
@@ -161,15 +177,17 @@ choose_snapshots_to_keep() {
 run_prune() {
   local dry_run="$1"
   local stamp latest now_epoch snap snapshot_count
+  load_config
   stamp="$(timestamp)"
   setup_prune_log "$stamp"
-
-  load_config
   parse_snapshot_root
   require_managed_target
   safe_root_or_die
 
   log "backup-agent prune starting: mode=$([[ "$dry_run" == true ]] && printf dry-run || printf run)"
+  if [[ -n "${BACKUP_TIMEZONE:-}" ]]; then
+    log "backup timezone: $BACKUP_TIMEZONE"
+  fi
   log "target: $(target_display_root)"
 
   SNAPSHOTS_DESC=()
@@ -187,7 +205,11 @@ run_prune() {
   fi
 
   latest="$(latest_snapshot_name)"
-  now_epoch="$(date '+%s')"
+  if [[ -n "${BACKUP_TIMEZONE:-}" ]]; then
+    now_epoch="$(TZ="$BACKUP_TIMEZONE" date '+%s')"
+  else
+    now_epoch="$(date '+%s')"
+  fi
   KEEP_LIST=""
   choose_snapshots_to_keep "$latest" "$now_epoch"
 

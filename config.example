@@ -69,6 +69,11 @@ EXCLUDE_FILES=(
 # For systemd installs, you may also provide an OnCalendar expression.
 BACKUP_FREQUENCY="hourly"
 
+# Optional timezone for snapshot folder names and pruning calculations.
+# Leave empty to use the machine's local timezone. Example:
+#   BACKUP_TIMEZONE="America/Toronto"
+BACKUP_TIMEZONE=""
+
 # Retention policy used by prune.sh.
 # Default model:
 #   Keep all snapshots from the last RETENTION_HOURLY hours.

@@ -145,15 +145,18 @@ cleanup_stale_incomplete() {
 run_backup() {
   local dry_run="$1"
   local stamp tmp previous cleanup_needed free_gb
+  acquire_run_lock
+  trap 'release_run_lock' EXIT INT TERM
+  load_config
   stamp="$(timestamp)"
   setup_log "$stamp"
   tmp=".incomplete-$stamp-$$"
   cleanup_needed=false
 
   log "backup-agent starting: mode=$([[ "$dry_run" == true ]] && printf dry-run || printf run)"
-  acquire_run_lock
-  trap 'release_run_lock' EXIT INT TERM
-  load_config
+  if [[ -n "${BACKUP_TIMEZONE:-}" ]]; then
+    log "backup timezone: $BACKUP_TIMEZONE"
+  fi
   parse_snapshot_root
   require_managed_target
   safe_root_or_die
