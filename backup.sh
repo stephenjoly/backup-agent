@@ -142,13 +142,31 @@ cleanup_stale_incomplete() {
   done < <(list_incomplete_snapshots)
 }
 
+choose_available_snapshot_stamp() {
+  local candidate="$1"
+  local attempts=0
+
+  while snapshot_exists "$candidate"; do
+    attempts=$((attempts + 1))
+    if [[ "$attempts" -gt 10 ]]; then
+      die "Could not find an unused snapshot timestamp after $attempts attempts."
+    fi
+    warn "snapshot already exists: $candidate; waiting for a fresh timestamp."
+    sleep 1
+    candidate="$(timestamp)"
+  done
+
+  printf '%s\n' "$candidate"
+}
+
 run_backup() {
   local dry_run="$1"
-  local stamp tmp previous cleanup_needed free_gb
+  local stamp tmp previous cleanup_needed free_gb initial_stamp
   acquire_run_lock
   trap 'release_run_lock' EXIT INT TERM
   load_config
   stamp="$(timestamp)"
+  initial_stamp="$stamp"
   setup_log "$stamp"
   tmp=".incomplete-$stamp-$$"
   cleanup_needed=false
@@ -165,6 +183,12 @@ run_backup() {
   build_rsync_args "$dry_run"
 
   target_mkdirs
+  stamp="$(choose_available_snapshot_stamp "$stamp")"
+  if [[ "$stamp" != "$initial_stamp" ]]; then
+    tmp=".incomplete-$stamp-$$"
+    log "using alternate snapshot timestamp: $stamp"
+  fi
+
   if ! truthy "$dry_run"; then
     cleanup_stale_incomplete "$tmp"
   fi
@@ -239,10 +263,6 @@ run_backup() {
     trap - EXIT INT TERM
     release_run_lock
     return 0
-  fi
-
-  if snapshot_exists "$stamp"; then
-    die "Snapshot already exists: $stamp"
   fi
 
   rename_incomplete_snapshot "$tmp" "$stamp"
