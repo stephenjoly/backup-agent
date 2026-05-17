@@ -213,15 +213,8 @@ run_backup() {
     log "previous snapshot: none"
   fi
 
-  if ! truthy "$dry_run"; then
-    prepare_tmp_root "$tmp"
-    cleanup_needed=true
-  else
-    # Some rsync versions create the destination directory even with --dry-run.
-    # Treat dry-run staging as cleanup-owned so interrupted scans do not leave
-    # .incomplete-* directories behind.
-    cleanup_needed=true
-  fi
+  prepare_tmp_root "$tmp"
+  cleanup_needed=true
 
   cleanup() {
     local status=$?
@@ -238,16 +231,27 @@ run_backup() {
   for src in "${SOURCE_PATHS[@]}"; do
     expanded="$(expand_path "$src")"
     label="$(source_label "$expanded")"
-    dest="$(target_rsync_path "$tmp/$label/")"
     src_arg="$(rsync_source_arg "$expanded")"
     link_dest_arg=()
-    if [[ -n "$previous" ]]; then
-      # Relative to the per-source destination directory:
-      #   .incomplete-.../<label>/ -> snapshots/<previous>/<label>/
-      link_dest_arg=("--link-dest=../../snapshots/$previous/$label")
+
+    if [[ -d "$expanded" ]]; then
+      dest="$(target_rsync_path "$tmp/$label/")"
+      if [[ -n "$previous" ]]; then
+        # Relative to the per-source destination directory:
+        #   .incomplete-.../<label>/ -> snapshots/<previous>/<label>/
+        link_dest_arg=("--link-dest=../../snapshots/$previous/$label")
+      fi
+      log "rsync source '$expanded' -> '$label/'"
+    else
+      dest="$(target_rsync_path "$tmp/")"
+      if [[ -n "$previous" ]]; then
+        # Relative to the snapshot root:
+        #   .incomplete-.../ -> snapshots/<previous>/
+        link_dest_arg=("--link-dest=../snapshots/$previous")
+      fi
+      log "rsync source '$expanded' -> '$label'"
     fi
 
-    log "rsync source '$expanded' -> '$label/'"
     if [[ -n "$previous" ]]; then
       rsync "${RSYNC_ARGS[@]}" "${link_dest_arg[@]}" "$src_arg" "$dest" 2>&1 | tee -a "$LOG_FILE"
     else
