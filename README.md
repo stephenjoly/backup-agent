@@ -139,6 +139,7 @@ SNAPSHOT_ROOT="${BACKUP_TARGET}/${MACHINE_NAME:-$(hostname -s 2>/dev/null || hos
 SSH_PORT=""
 SSH_KEY=""
 BACKUP_TIMEZONE="America/Toronto"
+ONE_FILE_SYSTEM=true
 
 SOURCE_PATHS=(
   "$HOME/Documents"
@@ -155,6 +156,8 @@ EXCLUDE_FILES=(
 ```
 
 `BACKUP_TIMEZONE` controls snapshot folder names and pruning calculations. Leave it empty to use each machine's local timezone, or set an IANA timezone such as `America/Toronto` for consistent names across machines.
+
+`ONE_FILE_SYSTEM=true` is the default safety setting. It passes `--one-file-system` to rsync so a broad source such as `$HOME` will not cross into mounted NAS, NFS, SMB, USB, or other filesystems inside that source path. Keep explicit excludes for known mount points too, because they document intent and protect older script versions.
 
 For personal Linux machines, backing up selected home directories is reasonable. For work machines, prefer explicitly included personal directories only. Do not try to infer confidential files by extension alone. Avoid broad folders like `~/Desktop` or `~/Documents` on a work machine unless that is explicitly intended.
 
@@ -347,5 +350,6 @@ PRUNE_AFTER_BACKUP=false
 - No special handling for live VM disk images.
 - Network rsync jobs can be interrupted; the active incomplete snapshot is cleaned up by the script, and stale incomplete snapshots are cleaned before the next real run.
 - Hard links require destination support and usually the same destination filesystem.
+- `ONE_FILE_SYSTEM=true` prevents traversal into mounted filesystems below each source, but it does not replace careful source selection.
 - `rsync://` targets are not enough for this implementation's safe snapshot lifecycle.
 - Paths with unusual shell characters on the remote destination are best avoided.

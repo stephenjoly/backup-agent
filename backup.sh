@@ -50,6 +50,10 @@ build_rsync_args() {
   local dry_run="$1"
   RSYNC_ARGS=(-a --delete --human-readable --stats)
 
+  if truthy "$ONE_FILE_SYSTEM"; then
+    RSYNC_ARGS+=(--one-file-system)
+  fi
+
   if truthy "$dry_run"; then
     RSYNC_ARGS+=(--dry-run --itemize-changes)
   elif truthy "$VERBOSE"; then

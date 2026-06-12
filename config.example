@@ -97,6 +97,11 @@ MIN_FREE_SPACE_GB=20
 # Explicit ./backup.sh run still performs a real backup.
 DRY_RUN_BY_DEFAULT=true
 
+# Stay on the same local filesystem as each SOURCE_PATHS entry.
+# This prevents accidentally backing up mounted NAS/NFS/SMB/USB volumes inside
+# a source directory, such as an NFS share mounted under $HOME.
+ONE_FILE_SYSTEM=true
+
 # In real backup runs, remove stale .incomplete-* directories from older failed
 # or interrupted attempts before starting a new snapshot. A local lock prevents
 # overlapping runs on the same machine from deleting each other's staging dirs.
