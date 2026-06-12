@@ -159,6 +159,8 @@ EXCLUDE_FILES=(
 
 `ONE_FILE_SYSTEM=true` is the default safety setting. It passes `--one-file-system` to rsync so a broad source such as `$HOME` will not cross into mounted NAS, NFS, SMB, USB, or other filesystems inside that source path. Keep explicit excludes for known mount points too, because they document intent and protect older script versions.
 
+`validate.sh` also reports nested mount points found under `SOURCE_PATHS`. With `ONE_FILE_SYSTEM=true`, these are warnings because rsync will skip crossing them. With `ONE_FILE_SYSTEM=false`, they are validation failures.
+
 For personal Linux machines, backing up selected home directories is reasonable. For work machines, prefer explicitly included personal directories only. Do not try to infer confidential files by extension alone. Avoid broad folders like `~/Desktop` or `~/Documents` on a work machine unless that is explicitly intended.
 
 ## Dry Run

@@ -42,12 +42,43 @@ check_config() {
   fi
 }
 
+list_nested_mounts() {
+  local root="${1%/}"
+  [[ -d "$root" ]] || return 0
+
+  if command -v findmnt >/dev/null 2>&1; then
+    findmnt -n -r -o TARGET 2>/dev/null | while IFS= read -r mount_point; do
+      [[ -n "$mount_point" && "$mount_point" != "$root" ]] || continue
+      case "$mount_point" in
+        "$root"/*) printf '%s\n' "$mount_point" ;;
+      esac
+    done
+  else
+    mount | sed -n 's/.* on \(.*\) (.*/\1/p' | while IFS= read -r mount_point; do
+      [[ -n "$mount_point" && "$mount_point" != "$root" ]] || continue
+      case "$mount_point" in
+        "$root"/*) printf '%s\n' "$mount_point" ;;
+      esac
+    done
+  fi
+}
+
 check_sources() {
-  local src expanded label labels=""
+  local src expanded label labels="" nested_mounts
   for src in "${SOURCE_PATHS[@]}"; do
     expanded="$(expand_path "$src")"
     if [[ -e "$expanded" ]]; then
       pass "source exists: $src -> $expanded"
+      nested_mounts="$(list_nested_mounts "$expanded" | sed 's/^/  /' || true)"
+      if [[ -n "$nested_mounts" ]]; then
+        if truthy "$ONE_FILE_SYSTEM"; then
+          note_warn "source contains nested mount point(s); ONE_FILE_SYSTEM=true will skip crossing them: $src
+$nested_mounts"
+        else
+          fail "source contains nested mount point(s) and ONE_FILE_SYSTEM=false: $src
+$nested_mounts"
+        fi
+      fi
     else
       fail "source missing: $src -> $expanded"
     fi
