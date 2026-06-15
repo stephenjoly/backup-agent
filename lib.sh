@@ -68,6 +68,7 @@ load_config() {
     SSH_EXTRA_OPTS=()
   fi
   MIN_FREE_SPACE_GB="${MIN_FREE_SPACE_GB:-0}"
+  MAX_SOURCE_SIZE_GB="${MAX_SOURCE_SIZE_GB:-500}"
   DRY_RUN_BY_DEFAULT="${DRY_RUN_BY_DEFAULT:-true}"
   ONE_FILE_SYSTEM="${ONE_FILE_SYSTEM:-true}"
   CLEAN_STALE_INCOMPLETE="${CLEAN_STALE_INCOMPLETE:-true}"
@@ -83,6 +84,15 @@ load_config() {
   [[ -n "$SNAPSHOT_ROOT" ]] || die "SNAPSHOT_ROOT is empty in config."
   if [[ -z "${SOURCE_PATHS+x}" || "${#SOURCE_PATHS[@]}" -eq 0 ]]; then
     die "SOURCE_PATHS is empty in config."
+  fi
+}
+
+source_size_kb() {
+  local path="$1"
+  if [[ -d "$path" ]] && truthy "$ONE_FILE_SYSTEM"; then
+    du -sk -x "$path" 2>/dev/null | awk 'NR==1 {print $1}'
+  else
+    du -sk "$path" 2>/dev/null | awk 'NR==1 {print $1}'
   fi
 }
 

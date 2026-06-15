@@ -112,6 +112,28 @@ check_excludes() {
   done
 }
 
+check_source_size_limit() {
+  if [[ "${MAX_SOURCE_SIZE_GB:-0}" -le 0 ]]; then
+    pass "MAX_SOURCE_SIZE_GB check is disabled."
+    return
+  fi
+
+  local src expanded size_kb total_kb=0 limit_kb
+  for src in "${SOURCE_PATHS[@]}"; do
+    expanded="$(expand_path "$src")"
+    [[ -e "$expanded" ]] || continue
+    size_kb="$(source_size_kb "$expanded" || printf '0\n')"
+    total_kb=$((total_kb + size_kb))
+  done
+
+  limit_kb=$((MAX_SOURCE_SIZE_GB * 1024 * 1024))
+  if [[ "$total_kb" -le "$limit_kb" ]]; then
+    pass "source size estimate $((total_kb / 1024 / 1024)) GB <= MAX_SOURCE_SIZE_GB ${MAX_SOURCE_SIZE_GB} GB"
+  else
+    fail "source size estimate $((total_kb / 1024 / 1024)) GB > MAX_SOURCE_SIZE_GB ${MAX_SOURCE_SIZE_GB} GB"
+  fi
+}
+
 check_target_reachable() {
   case "$TARGET_MODE" in
     ssh)
@@ -199,6 +221,7 @@ main() {
 
   check_sources
   check_excludes
+  check_source_size_limit
   check_target_reachable
   check_target_writable_and_hardlinks
   check_free_space

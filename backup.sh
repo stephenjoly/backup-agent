@@ -92,6 +92,26 @@ ensure_unique_labels() {
   done
 }
 
+check_source_size_limit() {
+  if [[ "${MAX_SOURCE_SIZE_GB:-0}" -le 0 ]]; then
+    log "source size limit disabled."
+    return 0
+  fi
+
+  local src expanded size_kb total_kb=0 limit_kb
+  for src in "${SOURCE_PATHS[@]}"; do
+    expanded="$(expand_path "$src")"
+    size_kb="$(source_size_kb "$expanded" || printf '0\n')"
+    total_kb=$((total_kb + size_kb))
+  done
+
+  limit_kb=$((MAX_SOURCE_SIZE_GB * 1024 * 1024))
+  log "source size estimate: $((total_kb / 1024 / 1024)) GB; limit: ${MAX_SOURCE_SIZE_GB} GB"
+  if [[ "$total_kb" -gt "$limit_kb" ]]; then
+    die "Source size estimate exceeds MAX_SOURCE_SIZE_GB=${MAX_SOURCE_SIZE_GB}. Refusing backup."
+  fi
+}
+
 prepare_tmp_root() {
   local tmp="$1"
   safe_rel_name "$tmp" || die "Refusing malformed temp snapshot name: $tmp"
@@ -184,6 +204,7 @@ run_backup() {
   safe_root_or_die
   ensure_sources_exist
   ensure_unique_labels
+  check_source_size_limit
   build_rsync_args "$dry_run"
 
   target_mkdirs

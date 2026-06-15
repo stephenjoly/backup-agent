@@ -93,6 +93,11 @@ RETENTION_KEEP_RECENT=0
 # Optional safety check before backup. Set to 0 to disable.
 MIN_FREE_SPACE_GB=20
 
+# Refuse to back up if SOURCE_PATHS are larger than this many GB before
+# exclusions. With ONE_FILE_SYSTEM=true, mounted filesystems below each source
+# are not counted. Set to 0 to disable, or increase deliberately.
+MAX_SOURCE_SIZE_GB=500
+
 # If true, running ./backup.sh with no command defaults to dry-run.
 # Explicit ./backup.sh run still performs a real backup.
 DRY_RUN_BY_DEFAULT=true

@@ -140,6 +140,7 @@ SSH_PORT=""
 SSH_KEY=""
 BACKUP_TIMEZONE="America/Toronto"
 ONE_FILE_SYSTEM=true
+MAX_SOURCE_SIZE_GB=500
 
 SOURCE_PATHS=(
   "$HOME/Documents"
@@ -160,6 +161,8 @@ EXCLUDE_FILES=(
 `ONE_FILE_SYSTEM=true` is the default safety setting. It passes `--one-file-system` to rsync so a broad source such as `$HOME` will not cross into mounted NAS, NFS, SMB, USB, or other filesystems inside that source path. Keep explicit excludes for known mount points too, because they document intent and protect older script versions.
 
 `validate.sh` also reports nested mount points found under `SOURCE_PATHS`. With `ONE_FILE_SYSTEM=true`, these are warnings because rsync will skip crossing them. With `ONE_FILE_SYSTEM=false`, they are validation failures.
+
+`MAX_SOURCE_SIZE_GB=500` is a default source-size guard. The agent refuses to run when the configured sources exceed this estimate. With `ONE_FILE_SYSTEM=true`, nested mounted filesystems are not counted. This is intentionally conservative and can be raised or set to `0` when a machine is deliberately expected to back up more.
 
 For personal Linux machines, backing up selected home directories is reasonable. For work machines, prefer explicitly included personal directories only. Do not try to infer confidential files by extension alone. Avoid broad folders like `~/Desktop` or `~/Documents` on a work machine unless that is explicitly intended.
 
@@ -353,5 +356,6 @@ PRUNE_AFTER_BACKUP=false
 - Network rsync jobs can be interrupted; the active incomplete snapshot is cleaned up by the script, and stale incomplete snapshots are cleaned before the next real run.
 - Hard links require destination support and usually the same destination filesystem.
 - `ONE_FILE_SYSTEM=true` prevents traversal into mounted filesystems below each source, but it does not replace careful source selection.
+- `MAX_SOURCE_SIZE_GB` is a source-side estimate before exclude rules; it is a safety guard, not an exact destination growth forecast.
 - `rsync://` targets are not enough for this implementation's safe snapshot lifecycle.
 - Paths with unusual shell characters on the remote destination are best avoided.
