@@ -112,6 +112,12 @@ ONE_FILE_SYSTEM=true
 # overlapping runs on the same machine from deleting each other's staging dirs.
 CLEAN_STALE_INCOMPLETE=true
 
+# Live home directories often contain logs, sqlite WAL files, editor state, and
+# other files that change while rsync is reading them. rsync reports those as
+# code 23/24. With this true, the snapshot is kept and the log records a warning.
+# Set false for strict jobs where any changed or skipped file should fail backup.
+ALLOW_RSYNC_PARTIAL=true
+
 # Pruning is never automatic unless this is true.
 # Recommended: leave false and run ./prune.sh dry-run before ./prune.sh run.
 PRUNE_AFTER_BACKUP=false

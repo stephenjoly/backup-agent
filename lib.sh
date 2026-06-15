@@ -72,6 +72,7 @@ load_config() {
   DRY_RUN_BY_DEFAULT="${DRY_RUN_BY_DEFAULT:-true}"
   ONE_FILE_SYSTEM="${ONE_FILE_SYSTEM:-true}"
   CLEAN_STALE_INCOMPLETE="${CLEAN_STALE_INCOMPLETE:-true}"
+  ALLOW_RSYNC_PARTIAL="${ALLOW_RSYNC_PARTIAL:-true}"
   PRUNE_AFTER_BACKUP="${PRUNE_AFTER_BACKUP:-false}"
   RETENTION_KEEP_RECENT="${RETENTION_KEEP_RECENT:-0}"
   RETENTION_HOURLY="${RETENTION_HOURLY:-24}"
@@ -88,14 +89,19 @@ load_config() {
 }
 
 source_size_kb() {
-  local path="$1"
+  local path="$1" output value
   if [[ -d "$path" ]] && truthy "$ONE_FILE_SYSTEM"; then
-    du -sk -x "$path" 2>/dev/null | awk 'NR==1 {print $1}'
+    output="$(du -sk -x "$path" 2>/dev/null || true)"
   else
-    du -sk "$path" 2>/dev/null | awk 'NR==1 {print $1}'
+    output="$(du -sk "$path" 2>/dev/null || true)"
+  fi
+  value="$(printf '%s\n' "$output" | awk 'NR==1 {print $1}')"
+  if [[ "$value" =~ ^[0-9]+$ ]]; then
+    printf '%s\n' "$value"
+  else
+    return 1
   fi
 }
-
 TARGET_MODE=""
 REMOTE_HOST=""
 REMOTE_PATH=""

@@ -112,6 +112,29 @@ check_source_size_limit() {
   fi
 }
 
+
+run_rsync_checked() {
+  local status
+  set +e
+  rsync "$@" 2>&1 | tee -a "$LOG_FILE"
+  status=${PIPESTATUS[0]}
+  set -e
+
+  case "$status" in
+    0)
+      return 0
+      ;;
+    23|24)
+      if truthy "${ALLOW_RSYNC_PARTIAL:-true}"; then
+        log "WARNING: rsync exited with code $status; continuing because ALLOW_RSYNC_PARTIAL=true. Some live-changing files may be absent or from a previous snapshot."
+        return 0
+      fi
+      ;;
+  esac
+
+  return "$status"
+}
+
 prepare_tmp_root() {
   local tmp="$1"
   safe_rel_name "$tmp" || die "Refusing malformed temp snapshot name: $tmp"
@@ -278,9 +301,9 @@ run_backup() {
     fi
 
     if [[ -n "$previous" ]]; then
-      rsync "${RSYNC_ARGS[@]}" "${link_dest_arg[@]}" "$src_arg" "$dest" 2>&1 | tee -a "$LOG_FILE"
+      run_rsync_checked "${RSYNC_ARGS[@]}" "${link_dest_arg[@]}" "$src_arg" "$dest"
     else
-      rsync "${RSYNC_ARGS[@]}" "$src_arg" "$dest" 2>&1 | tee -a "$LOG_FILE"
+      run_rsync_checked "${RSYNC_ARGS[@]}" "$src_arg" "$dest"
     fi
   done
 
